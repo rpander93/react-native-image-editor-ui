@@ -1,10 +1,12 @@
 import * as React from "react";
 import { ImageURISource, StyleSheet, View } from "react-native";
 import { PanGestureHandler } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { BOX_INDICATOR_BORDER, BOX_INDICATOR_SIZE, BOX_WIDTH } from "./constants";
 import { useIndicatorGesture, useIndicatorStyle, useVector } from "./utilities";
+
+type RotationAngles = -270 | -180 | -90 | 90 | 180 | 270;
 
 interface CropperProps {
   dimensions: { height: number; width: number };
@@ -13,12 +15,14 @@ interface CropperProps {
 
 interface CropperRefMethods {
   reset: () => void;
+  rotate: (degrees: RotationAngles) => void;
 }
 
 function Cropper({ dimensions, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
-  const [currDimensions, setCurrDimensions] = React.useState(dimensions);
+  const rotation = useSharedValue(0);
+  const scale = useSharedValue(1);
 
-  const aspectRatio = currDimensions.width / currDimensions.height;
+  const aspectRatio = dimensions.width / dimensions.height;
   const imageWidth = BOX_WIDTH - 2;
   const imageHeight = imageWidth / aspectRatio;
 
@@ -44,15 +48,38 @@ function Cropper({ dimensions, source }: CropperProps, ref: React.Ref<CropperRef
   const bottomLeftStyle = useIndicatorStyle(bottomLeft);
   const bottomRightStyle = useIndicatorStyle(bottomRight);
 
-  const handleOnReset = () => {
+  const resetVectors = () => {
     [topLeft, topRight, bottomLeft, bottomRight].forEach(vector => {
       vector.x.value = withTiming(vector.initialX);
       vector.y.value = withTiming(vector.initialY);
     });
   };
 
+  const handleOnReset = () => {
+    resetVectors();
+
+    rotation.value = withTiming(0);
+    scale.value = withTiming(1);
+  };
+
+  const handleOnRotate = (degrees: RotationAngles) => {
+    const isOriginalDimensions = degrees % 180 === 0;
+    const heightDiff = imageHeight - imageWidth;
+
+    rotation.value = withTiming(degrees);
+    scale.value = withTiming(isOriginalDimensions ? 1 : aspectRatio);
+
+    if (isOriginalDimensions) return resetVectors();
+
+    topLeft.y.value = withTiming(topLeft.initialY + heightDiff - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER);
+    topRight.y.value = withTiming(topRight.initialY + heightDiff - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER);
+    bottomLeft.y.value = withTiming(bottomLeft.initialY - heightDiff + BOX_INDICATOR_SIZE - BOX_INDICATOR_BORDER * 2);
+    bottomRight.y.value = withTiming(bottomRight.initialY - heightDiff + BOX_INDICATOR_SIZE - BOX_INDICATOR_BORDER * 2);
+  };
+
   React.useImperativeHandle(ref, () => ({
     reset: handleOnReset,
+    rotate: handleOnRotate,
   }));
 
   React.useEffect(() => {
@@ -76,12 +103,15 @@ function Cropper({ dimensions, source }: CropperProps, ref: React.Ref<CropperRef
   const imageDimensions = { height: imageHeight, width: imageWidth };
 
   const backgroundImageStyle = useAnimatedStyle(() => {
-    return { opacity: 0.5 };
+    return { opacity: 0.5, transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }] };
   });
 
   const focusedImageStyle = useAnimatedStyle(() => {
-    // 3 = to correct for blurred image top, left and bounding box border size
-    return { top: -topLeft.y.value - 3, left: -topLeft.x.value - 3 };
+    return {
+      top: -topLeft.y.value - BOX_INDICATOR_BORDER,
+      left: -topLeft.x.value - BOX_INDICATOR_BORDER,
+      transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
+    };
   });
 
   return (

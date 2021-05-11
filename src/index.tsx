@@ -21,8 +21,10 @@ interface ImageCropperProps {
 
 export default function ImageCropper({ source }: ImageCropperProps) {
   const cropperBoxRef = React.useRef<typeof Cropper>();
+
   const [hasDimensions, setHasDimensions] = React.useState(false);
   const [dimensions, setDimensions] = React.useState({ height: 0, width: 0 });
+  const [rotation, setRotation] = React.useState(0);
 
   React.useEffect(() => {
     fetchImageDimensions(source)
@@ -38,13 +40,19 @@ export default function ImageCropper({ source }: ImageCropperProps) {
 
   const handleOnReset = () => {
     cropperBoxRef.current?.reset();
+    setRotation(0);
+  };
+
+  const handleOnRotate = () => {
+    const newValue = (rotation + 90) % 360;
+
+    cropperBoxRef.current?.rotate(newValue);
+    setRotation(newValue);
   };
 
   return (
     <View style={styles.page}>
-      {false !== hasDimensions && (
-        <Image blurRadius={28} resizeMode="cover" source={source} style={styles.backgroundCover} />
-      )}
+      <Image blurRadius={28} resizeMode="cover" source={source} style={styles.backgroundCover} />
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="light-content" />
         <View style={styles.safeArea}>
@@ -56,6 +64,9 @@ export default function ImageCropper({ source }: ImageCropperProps) {
             )}
           </View>
           <View style={styles.primaryButtons}>
+            <Pressable onPress={handleOnRotate}>
+              <Text style={styles.resetText}>Rotate</Text>
+            </Pressable>
             <Pressable onPress={handleOnReset}>
               <Text style={styles.resetText}>Reset</Text>
             </Pressable>
