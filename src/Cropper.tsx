@@ -7,6 +7,7 @@ import { BOX_INDICATOR_BORDER, BOX_INDICATOR_SIZE, BOX_WIDTH } from "./constants
 import { useIndicatorGesture, useIndicatorStyle, useVector } from "./utilities";
 
 type RotationAngles = -270 | -180 | -90 | 90 | 180 | 270;
+type Adjustments = { rotate: number; originX: number; originY: number; width: number; height: number };
 
 interface CropperProps {
   dimensions: { height: number; width: number };
@@ -14,6 +15,7 @@ interface CropperProps {
 }
 
 interface CropperRefMethods {
+  getAdjustments: () => Adjustments;
   reset: () => void;
   rotate: (degrees: RotationAngles) => void;
 }
@@ -78,6 +80,15 @@ function Cropper({ dimensions, source }: CropperProps, ref: React.Ref<CropperRef
   };
 
   React.useImperativeHandle(ref, () => ({
+    getAdjustments: () => {
+      return {
+        rotate: rotation.value,
+        originX: topLeft.x.value,
+        originY: topLeft.y.value,
+        width: topRight.x.value - topLeft.x.value,
+        height: topLeft.y.value - bottomLeft.y.value,
+      };
+    },
     reset: handleOnReset,
     rotate: handleOnRotate,
   }));

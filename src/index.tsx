@@ -1,6 +1,7 @@
 import * as React from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   ImageURISource,
   Pressable,
@@ -20,7 +21,7 @@ interface ImageCropperProps {
 }
 
 export default function ImageCropper({ source }: ImageCropperProps) {
-  const cropperBoxRef = React.useRef<typeof Cropper>();
+  const cropperBoxRef = React.useRef<React.ElementRef<typeof Cropper>>();
 
   const [hasDimensions, setHasDimensions] = React.useState(false);
   const [dimensions, setDimensions] = React.useState({ height: 0, width: 0 });
@@ -37,6 +38,11 @@ export default function ImageCropper({ source }: ImageCropperProps) {
         setHasDimensions(false);
       });
   }, [source]);
+
+  const handleOnDone = () => {
+    const manipulations = cropperBoxRef.current?.getAdjustments();
+    Alert.alert("Result", JSON.stringify(manipulations));
+  };
 
   const handleOnReset = () => {
     cropperBoxRef.current?.reset();
@@ -74,7 +80,9 @@ export default function ImageCropper({ source }: ImageCropperProps) {
           </View>
           <View style={styles.bottomButtons}>
             <Text style={styles.bottomButtonText}>Cancel</Text>
-            <Text style={styles.bottomButtonText}>Done</Text>
+            <Pressable onPress={handleOnDone}>
+              <Text style={styles.bottomButtonText}>Done</Text>
+            </Pressable>
           </View>
         </View>
       </SafeAreaView>
