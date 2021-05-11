@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 import { PADDING_HORIZONTAL, SCREEN_WIDTH } from "./constants";
-import CropperBox from "./CropperBox";
+import Cropper from "./Cropper";
 import fetchImageDimensions from "./fetch-image-dimensions";
 
 interface ImageCropperProps {
@@ -20,7 +20,7 @@ interface ImageCropperProps {
 }
 
 export default function ImageCropper({ source }: ImageCropperProps) {
-  const cropperBoxRef = React.useRef<typeof CropperBox>();
+  const cropperBoxRef = React.useRef<typeof Cropper>();
   const [hasDimensions, setHasDimensions] = React.useState(false);
   const [dimensions, setDimensions] = React.useState({ height: 0, width: 0 });
 
@@ -52,12 +52,15 @@ export default function ImageCropper({ source }: ImageCropperProps) {
             {false === hasDimensions ? (
               <ActivityIndicator color="white" />
             ) : (
-              <CropperBox ref={cropperBoxRef} dimensions={dimensions} source={source} />
+              <Cropper ref={cropperBoxRef} dimensions={dimensions} source={source} />
             )}
           </View>
-          <Pressable onPress={handleOnReset} style={styles.resetButton}>
-            <Text style={styles.resetText}>Reset</Text>
-          </Pressable>
+          <View style={styles.primaryButtons}>
+            <Pressable onPress={handleOnReset}>
+              <Text style={styles.resetText}>Reset</Text>
+            </Pressable>
+            <View />
+          </View>
           <View style={styles.bottomButtons}>
             <Text style={styles.bottomButtonText}>Cancel</Text>
             <Text style={styles.bottomButtonText}>Done</Text>
@@ -71,8 +74,9 @@ export default function ImageCropper({ source }: ImageCropperProps) {
 const styles = StyleSheet.create({
   backgroundCover: {
     ...StyleSheet.absoluteFillObject,
+    bottom: 50,
     width: SCREEN_WIDTH,
-    height: "100%",
+    height: "95%",
     opacity: 0.1,
   },
   bottomButtons: {
@@ -95,9 +99,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flex: 1,
   },
-  resetButton: {
+  primaryButtons: {
     alignItems: "center",
-    paddingBottom: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: PADDING_HORIZONTAL,
+    paddingBottom: 10,
   },
   resetText: {
     color: "white",

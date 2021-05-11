@@ -4,6 +4,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get("screen");
 
 export { SCREEN_WIDTH };
 export const PADDING_HORIZONTAL = 15;
-export const CROPPER_WIDTH = SCREEN_WIDTH - PADDING_HORIZONTAL * 2;
-export const CROPPER_BOX_TIP_BORDER = 3;
-export const CROPPER_BOX_TIP_SIZE = 20;
+export const BOX_WIDTH = SCREEN_WIDTH - PADDING_HORIZONTAL * 2;
+export const BOX_INDICATOR_BORDER = 3;
+export const BOX_INDICATOR_SIZE = 20;
