@@ -4,12 +4,14 @@ import { PanGestureHandler } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { BOX_INDICATOR_BORDER, BOX_INDICATOR_SIZE, BOX_WIDTH } from "./constants";
+import Gridlines from "./Gridlines";
 import { useIndicatorGestureHandler, useIndicatorStyle, useVector } from "./utilities";
 
 export type RotationAngles = -270 | -180 | -90 | 90 | 180 | 270;
 export type Adjustments = { rotate: number; originX: number; originY: number; width: number; height: number };
 
 interface CropperProps {
+  gridlines?: boolean;
   source: ImageURISource & { height: number; width: number };
 }
 
@@ -19,7 +21,8 @@ interface CropperRefMethods {
   rotate: (degrees: RotationAngles) => void;
 }
 
-function Cropper({ source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
+function Cropper({ gridlines = true, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
+  const isCropping = useSharedValue(false);
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
 
@@ -129,28 +132,32 @@ function Cropper({ source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
     bottomLeft.x,
     topRight.y,
     [bounds.leftX, topRight.x],
-    [bounds.topY, bottomLeft.y]
+    [bounds.topY, bottomLeft.y],
+    isCropping
   );
   const topRightGestureHandler = useIndicatorGestureHandler(
     topRight,
     bottomRight.x,
     topLeft.y,
     [topLeft.x, bounds.rightX],
-    [bounds.topY, bottomRight.y]
+    [bounds.topY, bottomRight.y],
+    isCropping
   );
   const bottomLeftGestureHandler = useIndicatorGestureHandler(
     bottomLeft,
     topLeft.x,
     bottomRight.y,
     [bounds.leftX, bottomRight.x],
-    [topLeft.y, bounds.bottomY]
+    [topLeft.y, bounds.bottomY],
+    isCropping
   );
   const bottomRightGestureHandler = useIndicatorGestureHandler(
     bottomRight,
     topRight.x,
     bottomLeft.y,
     [bottomLeft.x, bounds.rightX],
-    [topRight.y, bounds.bottomY]
+    [topRight.y, bounds.bottomY],
+    isCropping
   );
 
   const imageDimensions = { height: imageHeight, width: imageWidth };
@@ -181,6 +188,15 @@ function Cropper({ source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
       <Animated.Image blurRadius={8} source={source} style={[styles.image, imageDimensions, backgroundImageStyle]} />
       <Animated.View style={[styles.boundingBox, boundingBoxStyles]}>
         <Animated.Image source={source} style={[styles.image, imageDimensions, focusedImageStyle]} />
+        {gridlines && (
+          <Gridlines
+            topY={topLeft.y}
+            bottomY={bottomLeft.y}
+            leftX={topLeft.x}
+            rightX={topRight.x}
+            visible={isCropping}
+          />
+        )}
       </Animated.View>
       <PanGestureHandler onGestureEvent={topLeftGestureHandler}>
         {/* eslint-disable-next-line prettier/prettier */}

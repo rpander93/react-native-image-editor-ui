@@ -33,13 +33,16 @@ export function useIndicatorGestureHandler(
   trackingX: Animated.SharedValue<number>,
   trackingY: Animated.SharedValue<number>,
   interpolateX: Array<number | Animated.SharedValue<number>>,
-  interpolateY: Array<number | Animated.SharedValue<number>>
+  interpolateY: Array<number | Animated.SharedValue<number>>,
+  isActive: Animated.SharedValue<boolean>
 ) {
   return useAnimatedGestureHandler<PanGestureHandlerGestureEvent, GestureEventContext>(
     {
       onStart: (_, context) => {
         context.startX = vector.x.value;
         context.startY = vector.y.value;
+
+        isActive.value = true;
       },
       onActive: (event, context) => {
         const boundsX = mapToPlainNumbers(interpolateX);
@@ -52,6 +55,9 @@ export function useIndicatorGestureHandler(
 
         trackingX.value = vector.x.value;
         trackingY.value = vector.y.value;
+      },
+      onFinish: () => {
+        isActive.value = false;
       },
     },
     [vector, trackingX, trackingY, interpolateX, interpolateY]
