@@ -13,19 +13,19 @@ import {
 } from "react-native";
 
 import { PADDING_HORIZONTAL, SCREEN_WIDTH } from "./constants";
-import Cropper from "./Cropper";
-import fetchImageDimensions from "./fetch-image-dimensions";
+import Cropper, { RotationAngles } from "./Cropper";
+import { fetchImageDimensions } from "./utilities";
 
 interface ImageCropperProps {
   source: ImageURISource;
 }
 
 export default function ImageCropper({ source }: ImageCropperProps) {
-  const cropperBoxRef = React.useRef<React.ElementRef<typeof Cropper>>();
+  const cropperRef = React.useRef<React.ElementRef<typeof Cropper>>(null);
+  const rotation = React.useRef<number>(0);
 
   const [hasDimensions, setHasDimensions] = React.useState(false);
   const [dimensions, setDimensions] = React.useState({ height: 0, width: 0 });
-  const [rotation, setRotation] = React.useState(0);
 
   React.useEffect(() => {
     fetchImageDimensions(source)
@@ -40,20 +40,20 @@ export default function ImageCropper({ source }: ImageCropperProps) {
   }, [source]);
 
   const handleOnDone = () => {
-    const manipulations = cropperBoxRef.current?.getAdjustments();
+    const manipulations = cropperRef.current?.getAdjustments();
     Alert.alert("Result", JSON.stringify(manipulations));
   };
 
   const handleOnReset = () => {
-    cropperBoxRef.current?.reset();
-    setRotation(0);
+    cropperRef.current?.reset();
+    rotation.current = 0;
   };
 
   const handleOnRotate = () => {
-    const newValue = (rotation + 90) % 360;
+    const newValue = (rotation.current + 90) % 360;
 
-    cropperBoxRef.current?.rotate(newValue);
-    setRotation(newValue);
+    cropperRef.current?.rotate(newValue as RotationAngles);
+    rotation.current = newValue;
   };
 
   return (
@@ -66,7 +66,7 @@ export default function ImageCropper({ source }: ImageCropperProps) {
             {false === hasDimensions ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Cropper ref={cropperBoxRef} dimensions={dimensions} source={source} />
+              <Cropper ref={cropperRef} source={{ ...source, ...dimensions }} />
             )}
           </View>
           <View style={styles.primaryButtons}>
@@ -76,7 +76,6 @@ export default function ImageCropper({ source }: ImageCropperProps) {
             <Pressable onPress={handleOnReset}>
               <Text style={styles.resetText}>Reset</Text>
             </Pressable>
-            <View />
           </View>
           <View style={styles.bottomButtons}>
             <Text style={styles.bottomButtonText}>Cancel</Text>
