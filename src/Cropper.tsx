@@ -3,7 +3,7 @@ import { ImageURISource, StyleSheet, View } from "react-native";
 import { PanGestureHandler } from "react-native-gesture-handler";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
-import { BOX_BORDER, BOX_INDICATOR_BORDER, BOX_INDICATOR_SIZE, BOX_WIDTH } from "./constants";
+import { BOX_BORDER, BOX_INDICATOR_BORDER, BOX_INDICATOR_SIZE } from "./constants";
 import Gridlines from "./Gridlines";
 import { Bounds, createBoundsValues, useIndicatorGestureHandler, useIndicatorStyle, useVector } from "./utilities";
 
@@ -12,6 +12,8 @@ export type Adjustments = { rotate: number; originX: number; originY: number; wi
 
 interface CropperProps {
   gridlines?: boolean;
+  maxWidth: number;
+  maxHeight: number;
   source: ImageURISource & { height: number; width: number };
 }
 
@@ -21,16 +23,16 @@ interface CropperRefMethods {
   rotate: (degrees: RotationAngles) => void;
 }
 
-function Cropper({ gridlines = true, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
+function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
   const aspectRatio = source.width / source.height;
-  const imageWidth = BOX_WIDTH - 2;
+  const imageWidth = maxWidth - 2;
   const imageHeight = imageWidth / aspectRatio;
 
   const initialBounds: Bounds = {
     topY: -BOX_INDICATOR_BORDER,
     bottomY: imageHeight - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER,
     leftX: -BOX_INDICATOR_BORDER,
-    rightX: BOX_WIDTH - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER,
+    rightX: maxWidth - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER,
   };
 
   const isCropping = useSharedValue(false);
@@ -61,10 +63,17 @@ function Cropper({ gridlines = true, source }: CropperProps, ref: React.Ref<Crop
   const bottomRightStyle = useIndicatorStyle(bottomRight);
 
   const resetIndicatorPositions = () => {
-    [topLeft, topRight, bottomLeft, bottomRight].forEach(vector => {
-      vector.x.value = withTiming(vector.initialX);
-      vector.y.value = withTiming(vector.initialY);
-    });
+    topLeft.x.value = initialBounds.leftX;
+    topLeft.y.value = initialBounds.topY;
+
+    bottomLeft.x.value = initialBounds.leftX;
+    bottomLeft.y.value = initialBounds.bottomY;
+
+    topRight.x.value = initialBounds.rightX;
+    topRight.y.value = initialBounds.topY;
+
+    bottomRight.x.value = initialBounds.rightX;
+    bottomRight.y.value = initialBounds.bottomY;
   };
 
   const resetBounds = () => {
@@ -113,8 +122,8 @@ function Cropper({ gridlines = true, source }: CropperProps, ref: React.Ref<Crop
   React.useImperativeHandle(ref, () => ({
     getAdjustments: () => ({
       rotate: rotation.value,
-      originX: topLeft.x.value - topLeft.initialX,
-      originY: topLeft.y.value - topLeft.initialY,
+      originX: topLeft.x.value - initialBounds.leftX,
+      originY: topLeft.y.value - initialBounds.topY,
       width: topRight.x.value - topLeft.x.value,
       height: bottomLeft.y.value - topLeft.y.value,
     }),
@@ -167,10 +176,10 @@ function Cropper({ gridlines = true, source }: CropperProps, ref: React.Ref<Crop
 
   const boundingBoxStyles = useAnimatedStyle(() => {
     return {
-      top: topLeft.y.value - topLeft.initialY,
-      left: topLeft.x.value - topLeft.initialX,
-      bottom: bottomRight.initialY - bottomRight.y.value,
-      right: bottomRight.initialX - bottomRight.x.value,
+      top: topLeft.y.value - initialBounds.topY,
+      left: topLeft.x.value - initialBounds.leftX,
+      bottom: initialBounds.bottomY - bottomRight.y.value,
+      right: initialBounds.rightX - bottomRight.x.value,
     };
   });
 

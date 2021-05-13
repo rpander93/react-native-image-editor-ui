@@ -4,13 +4,11 @@ import Animated, { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue }
 
 interface Vector<T> {
   x: Animated.SharedValue<T>;
-  initialX: T;
   y: Animated.SharedValue<T>;
-  initialY: T;
 }
 
 export function useVector<T = number>({ x: initialX, y: initialY }: { x: T; y: T }): Vector<T> {
-  return { x: useSharedValue(initialX), y: useSharedValue(initialY), initialX, initialY };
+  return { x: useSharedValue(initialX), y: useSharedValue(initialY) };
 }
 
 export function useIndicatorStyle({ x, y }: Vector<number>) {
