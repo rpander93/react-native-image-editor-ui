@@ -22,18 +22,12 @@ interface GestureEventContext extends Record<string, unknown> {
   startY: number;
 }
 
-function mapToPlainNumbers(input: Array<number | Animated.SharedValue<number>>) {
-  "worklet";
-
-  return input.map(v => (typeof v === "number" ? v : v.value));
-}
-
 export function useIndicatorGestureHandler(
   vector: Vector<number>,
   trackingX: Animated.SharedValue<number>,
   trackingY: Animated.SharedValue<number>,
-  interpolateX: Array<number | Animated.SharedValue<number>>,
-  interpolateY: Array<number | Animated.SharedValue<number>>,
+  [lowerX, upperX]: Array<Animated.SharedValue<number>>,
+  [lowerY, upperY]: Array<Animated.SharedValue<number>>,
   isActive: Animated.SharedValue<boolean>
 ) {
   return useAnimatedGestureHandler<PanGestureHandlerGestureEvent, GestureEventContext>(
@@ -45,13 +39,11 @@ export function useIndicatorGestureHandler(
         isActive.value = true;
       },
       onActive: (event, context) => {
-        const boundsX = mapToPlainNumbers(interpolateX);
         const currX = context.startX + event.translationX;
-        vector.x.value = Math.min(Math.max(currX, boundsX[0]), boundsX[1]);
+        vector.x.value = Math.min(Math.max(currX, lowerX.value), upperX.value);
 
-        const boundsY = mapToPlainNumbers(interpolateY);
         const currY = context.startY + event.translationY;
-        vector.y.value = Math.min(Math.max(currY, boundsY[0]), boundsY[1]);
+        vector.y.value = Math.min(Math.max(currY, lowerY.value), upperY.value);
 
         trackingX.value = vector.x.value;
         trackingY.value = vector.y.value;
@@ -60,8 +52,24 @@ export function useIndicatorGestureHandler(
         isActive.value = false;
       },
     },
-    [vector, trackingX, trackingY, interpolateX, interpolateY]
+    [vector, trackingX, trackingY, lowerX, upperX, lowerY, upperY]
   );
+}
+
+export interface Bounds {
+  topY: number;
+  bottomY: number;
+  leftX: number;
+  rightX: number;
+}
+
+export function createBoundsValues(initialBounds: Bounds) {
+  return {
+    topY: useSharedValue(initialBounds.topY),
+    bottomY: useSharedValue(initialBounds.bottomY),
+    leftX: useSharedValue(initialBounds.leftX),
+    rightX: useSharedValue(initialBounds.rightX),
+  };
 }
 
 export function fetchImageDimensions(source: ImageURISource): Promise<{ height: number; width: number }> {

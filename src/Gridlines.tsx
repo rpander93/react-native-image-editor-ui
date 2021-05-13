@@ -2,6 +2,8 @@ import * as React from "react";
 import { StyleSheet } from "react-native";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
+import { BOX_BORDER } from "./constants";
+
 interface GridlinesProps {
   topY: Animated.SharedValue<number>;
   bottomY: Animated.SharedValue<number>;
@@ -26,8 +28,8 @@ export default function Gridlines({ topY, bottomY, leftX, rightX, visible }: Gri
   const vertical1 = useAnimatedStyle(() => ({
     transform: [
       { rotate: "90deg" },
-      { translateX: (bottomY.value - topY.value) / 2 },
-      { scaleX: (bottomY.value - topY.value) / (rightX.value - leftX.value) },
+      { translateX: (bottomY.value - topY.value + 2 * BOX_BORDER) / 2 },
+      { scaleX: bottomY.value - topY.value / (rightX.value - leftX.value) },
       { translateY: (2 / 3 - 1 / 2) * (rightX.value - leftX.value) },
     ],
     opacity: true === visible.value ? 0.5 : 0,
@@ -36,8 +38,8 @@ export default function Gridlines({ topY, bottomY, leftX, rightX, visible }: Gri
   const vertical2 = useAnimatedStyle(() => ({
     transform: [
       { rotate: "90deg" },
-      { translateX: (bottomY.value - topY.value) / 2 },
-      { scaleX: (bottomY.value - topY.value) / (rightX.value - leftX.value) },
+      { translateX: (bottomY.value - topY.value + 2 * BOX_BORDER) / 2 },
+      { scaleX: bottomY.value - topY.value + 1 / (rightX.value - leftX.value) },
       { translateY: -(2 / 3 - 1 / 2) * (rightX.value - leftX.value) },
     ],
     opacity: true === visible.value ? 0.5 : 0,
