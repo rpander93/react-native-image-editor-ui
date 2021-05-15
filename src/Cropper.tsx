@@ -25,14 +25,20 @@ interface CropperRefMethods {
 
 function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
   const aspectRatio = source.width / source.height;
-  const imageWidth = maxWidth - 2;
-  const imageHeight = imageWidth / aspectRatio;
+
+  let imageWidth = Math.min(maxWidth, source.width) - 2 * BOX_BORDER;
+  let imageHeight = imageWidth / aspectRatio;
+
+  if (imageHeight > maxHeight) {
+    imageHeight = maxHeight;
+    imageWidth = imageHeight * aspectRatio - 2 * BOX_BORDER;
+  }
 
   const initialBounds: Bounds = {
     topY: -BOX_INDICATOR_BORDER,
-    bottomY: imageHeight - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER,
+    bottomY: imageHeight - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER + BOX_BORDER * 2,
     leftX: -BOX_INDICATOR_BORDER,
-    rightX: maxWidth - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER,
+    rightX: imageWidth - BOX_INDICATOR_SIZE + BOX_INDICATOR_BORDER + BOX_BORDER * 2,
   };
 
   const isCropping = useSharedValue(false);
@@ -63,17 +69,17 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
   const bottomRightStyle = useIndicatorStyle(bottomRight);
 
   const resetIndicatorPositions = () => {
-    topLeft.x.value = initialBounds.leftX;
-    topLeft.y.value = initialBounds.topY;
+    topLeft.x.value = withTiming(initialBounds.leftX);
+    topLeft.y.value = withTiming(initialBounds.topY);
 
-    bottomLeft.x.value = initialBounds.leftX;
-    bottomLeft.y.value = initialBounds.bottomY;
+    bottomLeft.x.value = withTiming(initialBounds.leftX);
+    bottomLeft.y.value = withTiming(initialBounds.bottomY);
 
-    topRight.x.value = initialBounds.rightX;
-    topRight.y.value = initialBounds.topY;
+    topRight.x.value = withTiming(initialBounds.rightX);
+    topRight.y.value = withTiming(initialBounds.topY);
 
-    bottomRight.x.value = initialBounds.rightX;
-    bottomRight.y.value = initialBounds.bottomY;
+    bottomRight.x.value = withTiming(initialBounds.rightX);
+    bottomRight.y.value = withTiming(initialBounds.bottomY);
   };
 
   const resetBounds = () => {

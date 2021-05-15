@@ -1,6 +1,7 @@
 import * as React from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   Image,
   ImageURISource,
   Pressable,
@@ -11,7 +12,6 @@ import {
   View,
 } from "react-native";
 
-import { BOX_WIDTH, PADDING_HORIZONTAL, SCREEN_WIDTH } from "./constants";
 import Cropper, { Adjustments, RotationAngles } from "./Cropper";
 import { fetchImageDimensions } from "./utilities";
 
@@ -20,6 +20,10 @@ interface CropScreenProps {
   source: ImageURISource;
   useBackgroundCover?: boolean;
 }
+
+const { width: SCREEN_WIDTH } = Dimensions.get("screen");
+const PADDING_HORIZONTAL = 15;
+const BOX_WIDTH = SCREEN_WIDTH - PADDING_HORIZONTAL * 2;
 
 export default function CropScreen({ onDone, source, useBackgroundCover = true }: CropScreenProps) {
   const cropperRef = React.useRef<React.ElementRef<typeof Cropper>>(null);
@@ -70,7 +74,7 @@ export default function CropScreen({ onDone, source, useBackgroundCover = true }
             {false === hasDimensions ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Cropper ref={cropperRef} maxWidth={BOX_WIDTH} source={{ ...source, ...dimensions }} />
+              <Cropper ref={cropperRef} maxHeight={1000} maxWidth={BOX_WIDTH} source={{ ...source, ...dimensions }} />
             )}
           </View>
           <View style={styles.primaryButtons}>
