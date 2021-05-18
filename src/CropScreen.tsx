@@ -47,7 +47,7 @@ export default function CropScreen({ onDone, source, useBackgroundCover = true }
   const handleOnDone = () => {
     if (!cropperRef.current) return;
 
-    onDone?.(cropperRef.current.getAdjustments());
+    onDone?.(cropperRef.current.calculateAdjustments());
   };
 
   const handleOnReset = () => {
