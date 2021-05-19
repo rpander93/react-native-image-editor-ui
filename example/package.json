@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "expo": "^41.0.0",
+    "expo-image-manipulator": "~9.1.0",
     "expo-splash-screen": "~0.10.2",
     "react": "16.13.1",
     "react-dom": "16.13.1",

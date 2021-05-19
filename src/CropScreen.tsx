@@ -16,7 +16,8 @@ import Cropper, { Adjustments, RotationAngles } from "./Cropper";
 import { fetchImageDimensions } from "./utilities";
 
 interface CropScreenProps {
-  onDone?: (adjustments: Adjustments) => void;
+  onCancel?: () => void;
+  onDone: (adjustments: Adjustments) => void;
   source: ImageURISource;
   useBackgroundCover?: boolean;
 }
@@ -25,7 +26,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("screen");
 const PADDING_HORIZONTAL = 15;
 const BOX_WIDTH = SCREEN_WIDTH - PADDING_HORIZONTAL * 2;
 
-export default function CropScreen({ onDone, source, useBackgroundCover = true }: CropScreenProps) {
+export default function CropScreen({ onCancel, onDone, source, useBackgroundCover = true }: CropScreenProps) {
   const cropperRef = React.useRef<React.ElementRef<typeof Cropper>>(null);
   const rotation = React.useRef<number>(0);
 
@@ -43,6 +44,10 @@ export default function CropScreen({ onDone, source, useBackgroundCover = true }
         setHasDimensions(false);
       });
   }, [source]);
+
+  const handleOnCancel = () => {
+    onCancel?.();
+  };
 
   const handleOnDone = () => {
     if (!cropperRef.current) return;
@@ -91,7 +96,13 @@ export default function CropScreen({ onDone, source, useBackgroundCover = true }
             </Pressable>
           </View>
           <View style={styles.bottomButtons}>
-            <Text style={styles.bottomButtonText}>Cancel</Text>
+            {undefined !== onCancel ? (
+              <Pressable onPress={handleOnCancel}>
+                <Text style={styles.bottomButtonText}>Cancel</Text>
+              </Pressable>
+            ) : (
+              <View />
+            )}
             <Pressable onPress={handleOnDone}>
               <Text style={styles.bottomButtonText}>Done</Text>
             </Pressable>
