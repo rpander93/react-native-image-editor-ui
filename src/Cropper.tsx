@@ -1,11 +1,16 @@
 import * as React from "react";
 import { ImageURISource, StyleSheet, View } from "react-native";
-import { PanGestureHandler } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { PanGestureHandler, PanGestureHandlerGestureEvent } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedGestureHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { BOX_BORDER, BOX_INDICATOR_BORDER, BOX_INDICATOR_SIZE } from "./constants";
 import Gridlines from "./Gridlines";
-import { Bounds, createBoundsValues, useIndicatorGestureHandler, useIndicatorStyle, useVector } from "./utilities";
+import { Bounds, createBoundsValues } from "./utilities";
 
 export type RotationAngles = -270 | -180 | -90 | 90 | 180 | 270;
 export type Adjustments = { rotate: number; originX: number; originY: number; width: number; height: number };
@@ -21,6 +26,13 @@ interface CropperRefMethods {
   calculateAdjustments: () => Adjustments;
   reset: () => void;
   rotate: (degrees: RotationAngles) => void;
+}
+
+interface GestureEventContext extends Record<string, unknown> {
+  topY: number;
+  bottomY: number;
+  leftX: number;
+  rightX: number;
 }
 
 function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
@@ -44,54 +56,27 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
   const isActive = useSharedValue(false);
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
-  const bounds = createBoundsValues(initialBounds);
 
-  const topLeft = useVector({
-    x: initialBounds.leftX,
-    y: initialBounds.topY,
-  });
-  const bottomLeft = useVector({
-    x: initialBounds.leftX,
-    y: initialBounds.bottomY,
-  });
-  const topRight = useVector({
-    x: initialBounds.rightX,
-    y: initialBounds.topY,
-  });
-  const bottomRight = useVector({
-    x: initialBounds.rightX,
-    y: initialBounds.bottomY,
-  });
+  const currentBounds = createBoundsValues(initialBounds);
+  const boundingBoxRect = createBoundsValues(initialBounds);
 
-  const topLeftStyle = useIndicatorStyle(topLeft);
-  const topRightStyle = useIndicatorStyle(topRight);
-  const bottomLeftStyle = useIndicatorStyle(bottomLeft);
-  const bottomRightStyle = useIndicatorStyle(bottomRight);
-
-  const resetIndicatorPositions = () => {
-    topLeft.x.value = withTiming(initialBounds.leftX);
-    topLeft.y.value = withTiming(initialBounds.topY);
-
-    bottomLeft.x.value = withTiming(initialBounds.leftX);
-    bottomLeft.y.value = withTiming(initialBounds.bottomY);
-
-    topRight.x.value = withTiming(initialBounds.rightX);
-    topRight.y.value = withTiming(initialBounds.topY);
-
-    bottomRight.x.value = withTiming(initialBounds.rightX);
-    bottomRight.y.value = withTiming(initialBounds.bottomY);
+  const resetBoundingBox = () => {
+    boundingBoxRect.topY.value = withTiming(initialBounds.topY);
+    boundingBoxRect.bottomY.value = withTiming(initialBounds.bottomY);
+    boundingBoxRect.leftX.value = withTiming(initialBounds.leftX);
+    boundingBoxRect.rightX.value = withTiming(initialBounds.rightX);
   };
 
-  const resetBounds = () => {
-    bounds.topY.value = initialBounds.topY;
-    bounds.bottomY.value = initialBounds.bottomY;
-    bounds.leftX.value = initialBounds.leftX;
-    bounds.rightX.value = initialBounds.rightX;
+  const resetCurrentBounds = () => {
+    currentBounds.topY.value = initialBounds.topY;
+    currentBounds.bottomY.value = initialBounds.bottomY;
+    currentBounds.leftX.value = initialBounds.leftX;
+    currentBounds.rightX.value = initialBounds.rightX;
   };
 
   const handleOnReset = () => {
-    resetIndicatorPositions();
-    resetBounds();
+    resetCurrentBounds();
+    resetBoundingBox();
 
     rotation.value = withTiming(0);
     scale.value = withTiming(1);
@@ -107,8 +92,8 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
     scale.value = withTiming(nextScale);
 
     if (isOriginalOrientation) {
-      resetBounds();
-      resetIndicatorPositions();
+      resetBoundingBox();
+      resetCurrentBounds();
 
       return;
     }
@@ -116,26 +101,25 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
     const topY = initialBounds.topY - (heightDiff - widthScaleDiff) / 2;
     const bottomY = initialBounds.bottomY + (heightDiff - widthScaleDiff) / 2;
 
-    topLeft.y.value = withTiming(topY);
-    topRight.y.value = withTiming(topY);
-    bottomLeft.y.value = withTiming(bottomY);
-    bottomRight.y.value = withTiming(bottomY);
+    // @todo: check if height wont exceed maxHeight
 
-    bounds.topY.value = topY;
-    bounds.bottomY.value = bottomY;
+    boundingBoxRect.topY.value = withTiming(topY);
+    boundingBoxRect.bottomY.value = withTiming(bottomY);
+    currentBounds.topY.value = topY;
+    currentBounds.bottomY.value = bottomY;
   };
 
   React.useImperativeHandle(ref, () => ({
     calculateAdjustments: () => {
       // correct for indicator boxes and borders
       const indicatorSpace = BOX_INDICATOR_SIZE - 2 * BOX_INDICATOR_BORDER;
-      const viewBoxWidth = topRight.x.value - topLeft.x.value + indicatorSpace;
-      const viewBoxHeight = bottomLeft.y.value - topLeft.y.value + indicatorSpace;
+      const viewBoxWidth = boundingBoxRect.rightX.value - boundingBoxRect.leftX.value + indicatorSpace;
+      const viewBoxHeight = boundingBoxRect.bottomY.value - boundingBoxRect.topY.value + indicatorSpace;
       const actualBoxWidth = viewBoxWidth * (source.width / imageWidth);
       const actualBoxHeight = viewBoxHeight * (source.height / imageHeight);
 
-      const viewOriginX = topLeft.x.value - bounds.leftX.value;
-      const viewOriginY = topLeft.y.value - bounds.topY.value;
+      const viewOriginX = boundingBoxRect.leftX.value - currentBounds.leftX.value;
+      const viewOriginY = boundingBoxRect.topY.value - currentBounds.topY.value;
       const actualOriginX = (viewOriginX / viewBoxWidth) * actualBoxWidth;
       const actualOriginY = (viewOriginY / viewBoxHeight) * actualBoxHeight;
 
@@ -151,114 +135,108 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
     rotate: handleOnRotate,
   }));
 
-  React.useEffect(() => {
-    handleOnReset();
-  }, [source]);
+  const gestureHandler = useAnimatedGestureHandler<PanGestureHandlerGestureEvent, GestureEventContext>({
+    onStart: (_, context) => {
+      isActive.value = true;
 
-  const topLeftGestureHandler = useIndicatorGestureHandler(
-    topLeft,
-    bottomLeft.x,
-    topRight.y,
-    [bounds.leftX, topRight.x],
-    [bounds.topY, bottomLeft.y],
-    isActive
-  );
-  const topRightGestureHandler = useIndicatorGestureHandler(
-    topRight,
-    bottomRight.x,
-    topLeft.y,
-    [topLeft.x, bounds.rightX],
-    [bounds.topY, bottomRight.y],
-    isActive
-  );
-  const bottomLeftGestureHandler = useIndicatorGestureHandler(
-    bottomLeft,
-    topLeft.x,
-    bottomRight.y,
-    [bounds.leftX, bottomRight.x],
-    [topLeft.y, bounds.bottomY],
-    isActive
-  );
-  const bottomRightGestureHandler = useIndicatorGestureHandler(
-    bottomRight,
-    topRight.x,
-    bottomLeft.y,
-    [bottomLeft.x, bounds.rightX],
-    [topRight.y, bounds.bottomY],
-    isActive
-  );
+      context.topY = boundingBoxRect.topY.value;
+      context.bottomY = boundingBoxRect.bottomY.value;
+      context.leftX = boundingBoxRect.leftX.value;
+      context.rightX = boundingBoxRect.rightX.value;
+    },
+    onActive: (event, context) => {
+      const boxWidth = boundingBoxRect.rightX.value - boundingBoxRect.leftX.value;
+      const boxHeight = boundingBoxRect.bottomY.value - boundingBoxRect.topY.value;
 
-  const imageDimensions = { height: imageHeight, width: imageWidth };
+      // Update vertical axis
+      if (event.y < 0.5 * boxHeight) {
+        boundingBoxRect.topY.value = Math.max(currentBounds.topY.value, context.topY + event.translationY);
+      } else if (event.y > 0.5 * boxHeight) {
+        boundingBoxRect.bottomY.value = Math.min(currentBounds.bottomY.value, context.bottomY + event.translationY);
+      }
+
+      // Update horizontal axis
+      if (event.x < 0.5 * boxWidth) {
+        boundingBoxRect.leftX.value = Math.max(currentBounds.leftX.value, context.leftX + event.translationX);
+      } else if (event.x > 0.5 * boxWidth) {
+        boundingBoxRect.rightX.value = Math.min(currentBounds.rightX.value, context.rightX + event.translationX);
+      }
+    },
+    onFinish: () => {
+      isActive.value = false;
+    },
+  });
 
   const backgroundImageStyle = useAnimatedStyle(() => ({
-    opacity: 0.25,
+    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
+  }));
+
+  const foregroundImageStyle = useAnimatedStyle(() => ({
+    top: -boundingBoxRect.topY.value + initialBounds.topY,
+    left: -boundingBoxRect.leftX.value + initialBounds.leftX,
     transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
   }));
 
   const boundingBoxStyles = useAnimatedStyle(() => ({
-    top: topLeft.y.value - initialBounds.topY,
-    left: topLeft.x.value - initialBounds.leftX,
-    bottom: initialBounds.bottomY - bottomRight.y.value,
-    right: initialBounds.rightX - bottomRight.x.value,
+    top: boundingBoxRect.topY.value - initialBounds.topY,
+    left: boundingBoxRect.leftX.value - initialBounds.leftX,
+    bottom: initialBounds.bottomY - boundingBoxRect.bottomY.value,
+    right: initialBounds.rightX - boundingBoxRect.rightX.value,
   }));
 
-  const focusedImageStyle = useAnimatedStyle(() => ({
-    top: -topLeft.y.value + initialBounds.topY,
-    left: -topLeft.x.value + initialBounds.leftX,
-    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
+  const foregroundImageBoxStyles = useAnimatedStyle(() => ({
+    top: boundingBoxRect.topY.value - initialBounds.topY,
+    left: boundingBoxRect.leftX.value - initialBounds.leftX,
+    bottom: initialBounds.bottomY - boundingBoxRect.bottomY.value,
+    right: initialBounds.rightX - boundingBoxRect.rightX.value,
   }));
+
+  const imageDimensions = { height: imageHeight, width: imageWidth };
 
   return (
     <View style={{ height: imageHeight + 2 * BOX_BORDER, width: imageWidth + 2 * BOX_BORDER }}>
-      <Animated.Image source={source} style={[styles.image, imageDimensions, backgroundImageStyle]} />
-      <Animated.View style={[styles.boundingBox, boundingBoxStyles]}>
-        <Animated.Image source={source} style={[styles.image, imageDimensions, focusedImageStyle]} />
+      <Animated.Image
+        source={source}
+        style={[styles.image, styles.backgroundImage, imageDimensions, backgroundImageStyle]}
+      />
+      <Animated.View style={[styles.imageBoundingBox, foregroundImageBoxStyles]}>
+        <Animated.Image source={source} style={[styles.image, imageDimensions, foregroundImageStyle]} />
         {gridlines && (
-          <Gridlines topY={topLeft.y} bottomY={bottomLeft.y} leftX={topLeft.x} rightX={topRight.x} visible={isActive} />
+          <Gridlines
+            topY={boundingBoxRect.topY}
+            bottomY={boundingBoxRect.bottomY}
+            leftX={boundingBoxRect.leftX}
+            rightX={boundingBoxRect.rightX}
+            isActive={isActive}
+          />
         )}
       </Animated.View>
-      <PanGestureHandler onGestureEvent={topLeftGestureHandler}>
-        {/* eslint-disable-next-line prettier/prettier */}
-        <Animated.View
-          hitSlop={INDICATOR_HIT_SLOP}
-          style={[styles.indicator, styles.indicatorTopLeft, topLeftStyle]}
-        />
-      </PanGestureHandler>
-      <PanGestureHandler onGestureEvent={topRightGestureHandler}>
-        <Animated.View
-          hitSlop={INDICATOR_HIT_SLOP}
-          style={[styles.indicator, styles.indicatorTopRight, topRightStyle]}
-        />
-      </PanGestureHandler>
-      <PanGestureHandler onGestureEvent={bottomLeftGestureHandler}>
-        <Animated.View
-          hitSlop={INDICATOR_HIT_SLOP}
-          style={[styles.indicator, styles.indicatorBottomLeft, bottomLeftStyle]}
-        />
-      </PanGestureHandler>
-      <PanGestureHandler onGestureEvent={bottomRightGestureHandler}>
-        <Animated.View
-          hitSlop={INDICATOR_HIT_SLOP}
-          style={[styles.indicator, styles.indicatorBottomRight, bottomRightStyle]}
-        />
+      <PanGestureHandler onGestureEvent={gestureHandler}>
+        <Animated.View style={[styles.boundingBox, boundingBoxStyles]}>
+          <Animated.View style={[styles.indicator, styles.indicatorTopLeft]} />
+          <Animated.View style={[styles.indicator, styles.indicatorTopRight]} />
+          <Animated.View style={[styles.indicator, styles.indicatorBottomLeft]} />
+          <Animated.View style={[styles.indicator, styles.indicatorBottomRight]} />
+        </Animated.View>
       </PanGestureHandler>
     </View>
   );
 }
-
-const INDICATOR_HIT_SLOP = {
-  top: (44 - BOX_INDICATOR_SIZE) / 2,
-  bottom: (44 - BOX_INDICATOR_SIZE) / 2,
-  left: (44 - BOX_INDICATOR_SIZE) / 2,
-  right: (44 - BOX_INDICATOR_SIZE) / 2,
-};
 
 const styles = StyleSheet.create({
   boundingBox: {
     borderColor: "white",
     borderWidth: BOX_BORDER,
     position: "absolute",
+  },
+  imageBoundingBox: {
+    borderColor: "transparent",
+    borderWidth: BOX_BORDER,
+    position: "absolute",
     overflow: "hidden",
+  },
+  backgroundImage: {
+    opacity: 0.25,
   },
   image: {
     ...StyleSheet.absoluteFillObject,
@@ -275,24 +253,32 @@ const styles = StyleSheet.create({
     borderTopWidth: BOX_INDICATOR_BORDER,
     borderStartColor: "white",
     borderStartWidth: BOX_INDICATOR_BORDER,
+    top: -BOX_INDICATOR_BORDER,
+    left: -BOX_INDICATOR_BORDER,
   },
   indicatorTopRight: {
     borderTopColor: "white",
     borderTopWidth: BOX_INDICATOR_BORDER,
     borderEndColor: "white",
     borderEndWidth: BOX_INDICATOR_BORDER,
+    top: -BOX_INDICATOR_BORDER,
+    right: -BOX_INDICATOR_BORDER,
   },
   indicatorBottomLeft: {
     borderBottomColor: "white",
     borderBottomWidth: BOX_INDICATOR_BORDER,
     borderStartColor: "white",
     borderStartWidth: BOX_INDICATOR_BORDER,
+    bottom: -BOX_INDICATOR_BORDER,
+    left: -BOX_INDICATOR_BORDER,
   },
   indicatorBottomRight: {
     borderBottomColor: "white",
     borderBottomWidth: BOX_INDICATOR_BORDER,
     borderEndColor: "white",
     borderEndWidth: BOX_INDICATOR_BORDER,
+    bottom: -BOX_INDICATOR_BORDER,
+    right: -BOX_INDICATOR_BORDER,
   },
 });
 

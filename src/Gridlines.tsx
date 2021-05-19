@@ -9,20 +9,20 @@ interface GridlinesProps {
   bottomY: Animated.SharedValue<number>;
   leftX: Animated.SharedValue<number>;
   rightX: Animated.SharedValue<number>;
-  visible: Animated.SharedValue<boolean>;
+  isActive: Animated.SharedValue<boolean>;
 }
 
 // Need multiple transforms for vertical gridlines or else they
 // seem to overlap eachother and only 1 is shown
-export default function Gridlines({ topY, bottomY, leftX, rightX, visible }: GridlinesProps) {
+export default function Gridlines({ topY, bottomY, leftX, rightX, isActive }: GridlinesProps) {
   const horizontal1 = useAnimatedStyle(() => ({
     transform: [{ translateY: (bottomY.value - topY.value) * (1 / 3) }],
-    opacity: true === visible.value ? 0.5 : 0,
+    opacity: true === isActive.value ? 0.5 : 0,
   }));
 
   const horizontal2 = useAnimatedStyle(() => ({
     transform: [{ translateY: (bottomY.value - topY.value) * (2 / 3) }],
-    opacity: true === visible.value ? 0.5 : 0,
+    opacity: true === isActive.value ? 0.5 : 0,
   }));
 
   const vertical1 = useAnimatedStyle(() => ({
@@ -32,7 +32,7 @@ export default function Gridlines({ topY, bottomY, leftX, rightX, visible }: Gri
       { scaleX: bottomY.value - topY.value / (rightX.value - leftX.value) },
       { translateY: (2 / 3 - 1 / 2) * (rightX.value - leftX.value) },
     ],
-    opacity: true === visible.value ? 0.5 : 0,
+    opacity: true === isActive.value ? 0.5 : 0,
   }));
 
   const vertical2 = useAnimatedStyle(() => ({
@@ -42,7 +42,7 @@ export default function Gridlines({ topY, bottomY, leftX, rightX, visible }: Gri
       { scaleX: bottomY.value - topY.value + 1 / (rightX.value - leftX.value) },
       { translateY: -(2 / 3 - 1 / 2) * (rightX.value - leftX.value) },
     ],
-    opacity: true === visible.value ? 0.5 : 0,
+    opacity: true === isActive.value ? 0.5 : 0,
   }));
 
   return (
