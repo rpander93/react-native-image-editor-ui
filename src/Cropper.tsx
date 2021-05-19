@@ -84,9 +84,12 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
 
   const handleOnRotate = (degrees: RotationAngles) => {
     const isOriginalOrientation = degrees % 180 === 0;
-    const nextScale = isOriginalOrientation ? 1 : aspectRatio;
-    const heightDiff = imageWidth - imageHeight;
-    const widthScaleDiff = imageWidth - imageWidth * nextScale;
+
+    let nextScale = isOriginalOrientation ? 1 : aspectRatio;
+    // Check if scaled and rotated height doesnt exceed max height
+    if (imageWidth * nextScale > maxHeight) {
+      nextScale = maxHeight / imageWidth;
+    }
 
     rotation.value = withTiming(degrees);
     scale.value = withTiming(nextScale);
@@ -98,15 +101,22 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
       return;
     }
 
-    const topY = initialBounds.topY - (heightDiff - widthScaleDiff) / 2;
-    const bottomY = initialBounds.bottomY + (heightDiff - widthScaleDiff) / 2;
+    const horizontal = imageWidth * nextScale - imageHeight;
+    const vertical = imageHeight * nextScale - imageWidth;
 
-    // @todo: check if height wont exceed maxHeight
+    const topY = initialBounds.topY - horizontal / 2;
+    const bottomY = initialBounds.bottomY + horizontal / 2;
+    const leftX = initialBounds.leftX - vertical / 2;
+    const rightX = initialBounds.rightX + vertical / 2;
 
     boundingBoxRect.topY.value = withTiming(topY);
     boundingBoxRect.bottomY.value = withTiming(bottomY);
+    boundingBoxRect.leftX.value = withTiming(leftX);
+    boundingBoxRect.rightX.value = withTiming(rightX);
     currentBounds.topY.value = topY;
     currentBounds.bottomY.value = bottomY;
+    currentBounds.leftX.value = leftX;
+    currentBounds.rightX.value = rightX;
   };
 
   React.useImperativeHandle(ref, () => ({

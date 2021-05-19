@@ -21,7 +21,7 @@ interface CropScreenProps {
   useBackgroundCover?: boolean;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get("screen");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("screen");
 const PADDING_HORIZONTAL = 15;
 const BOX_WIDTH = SCREEN_WIDTH - PADDING_HORIZONTAL * 2;
 
@@ -74,7 +74,12 @@ export default function CropScreen({ onDone, source, useBackgroundCover = true }
             {false === hasDimensions ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Cropper ref={cropperRef} maxHeight={1000} maxWidth={BOX_WIDTH} source={{ ...source, ...dimensions }} />
+              <Cropper
+                ref={cropperRef}
+                maxHeight={SCREEN_HEIGHT * 0.7}
+                maxWidth={BOX_WIDTH}
+                source={{ ...source, ...dimensions }}
+              />
             )}
           </View>
           <View style={styles.primaryButtons}>
