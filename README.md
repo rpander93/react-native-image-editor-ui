@@ -13,27 +13,27 @@ yarn add react-native-image-cropper
 ```
 ## Usage
 
-The default export is a full-screen component that shows a basic cropping UI. It contains a cancel, done, reset & rotate button.
+The default export is a full-screen component that shows a basic cropping UI. It contains a cancel, done, reset, flip & rotate button. Note that you *MUST* pass in the image dimensions (width, height). Unfortunately, the `Image.getSize` method cannot be used as it returns wrong results on Android. See [this issue](https://github.com/facebook/react-native/issues/22145).
 
-![CropScreen](assets/cropscreen_example.png)
+[See an example screenshot here](assets/cropscreen_example.png).
 
-```js
+```typescript
 import CropScreen, { Adustments } from "react-native-image-cropper";
 
 const handleOnCancel = () => {
   // ..
 };
 
-const handleOnDone = ({ rotate, originX, originY, width, height }: Adjustments) => {
+const handleOnDone = ({ rotate, flipHorizontal, originX, originY, width, height }: Adjustments) => {
   // ..
 };
 
-<CropScreen onCancel={handleOnCancel} onDone={handleOnDone} source={{ uri: "https://some.remote.example/image.png" }} useBackgroundCover={true} />
+<CropScreen onCancel={handleOnCancel} onDone={handleOnDone} source={{ uri: "https://some.remote.example/image.png", width: 1200, height: 750,  }} useBackgroundCover={true} />
 ```
 
-If you need more flexibility, you can also use the Cropper component directly which you can integrate in your own UI. If using the component, you *MUST* pass in the image dimensions (width, height). See also [src/CropScreen.tsx](src/CropScreen.tsx) for an example implementation.
+If you need more flexibility, you can also use the Cropper component directly which you can integrate in your own UI. Again, you *MUST* pass in the image dimensions (width, height). See also [src/CropScreen.tsx](src/CropScreen.tsx) for an example implementation.
 
-```js
+```typescript
 import * as React from "react";
 import { Cropper, Adustments, RotationAngles } from "react-native-image-cropper";
 
