@@ -13,12 +13,11 @@ import {
 } from "react-native";
 
 import Cropper, { Adjustments, RotationAngles } from "./Cropper";
-import { fetchImageDimensions } from "./utilities";
 
 interface CropScreenProps {
   onCancel?: () => void;
   onDone: (adjustments: Adjustments) => void;
-  source: ImageURISource;
+  source: ImageURISource & { height: number; width: number };
   useBackgroundCover?: boolean;
 }
 
@@ -30,21 +29,6 @@ export default function CropScreen({ onCancel, onDone, source, useBackgroundCove
   const cropperRef = React.useRef<React.ElementRef<typeof Cropper>>(null);
   const rotation = React.useRef<number>(0);
 
-  const [hasDimensions, setHasDimensions] = React.useState(false);
-  const [dimensions, setDimensions] = React.useState({ height: 0, width: 0 });
-
-  React.useEffect(() => {
-    fetchImageDimensions(source)
-      .then(result => {
-        setDimensions(result);
-        setHasDimensions(true);
-      })
-      .catch(() => {
-        setDimensions({ height: 0, width: 0 });
-        setHasDimensions(false);
-      });
-  }, [source]);
-
   const handleOnCancel = () => {
     onCancel?.();
   };
@@ -53,6 +37,10 @@ export default function CropScreen({ onCancel, onDone, source, useBackgroundCove
     if (!cropperRef.current) return;
 
     onDone?.(cropperRef.current.calculateAdjustments());
+  };
+
+  const handleOnFlip = () => {
+    cropperRef.current?.flip();
   };
 
   const handleOnReset = () => {
@@ -76,20 +64,14 @@ export default function CropScreen({ onCancel, onDone, source, useBackgroundCove
         <StatusBar barStyle="light-content" />
         <View style={styles.safeArea}>
           <View style={styles.content}>
-            {false === hasDimensions ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Cropper
-                ref={cropperRef}
-                maxHeight={SCREEN_HEIGHT * 0.7}
-                maxWidth={BOX_WIDTH}
-                source={{ ...source, ...dimensions }}
-              />
-            )}
+            <Cropper ref={cropperRef} maxHeight={SCREEN_HEIGHT * 0.7} maxWidth={BOX_WIDTH} source={{ ...source }} />
           </View>
           <View style={styles.primaryButtons}>
             <Pressable onPress={handleOnRotate}>
               <Text style={styles.resetText}>Rotate</Text>
+            </Pressable>
+            <Pressable onPress={handleOnFlip}>
+              <Text style={styles.resetText}>Flip</Text>
             </Pressable>
             <Pressable onPress={handleOnReset}>
               <Text style={styles.resetText}>Reset</Text>

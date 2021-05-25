@@ -10,10 +10,17 @@ import Animated, {
 
 import { BOX_BORDER, BOX_INDICATOR_BORDER, BOX_INDICATOR_SIZE } from "./constants";
 import Gridlines from "./Gridlines";
-import { Bounds, createBoundsValues } from "./utilities";
 
 export type RotationAngles = -270 | -180 | -90 | 90 | 180 | 270;
-export type Adjustments = { rotate: number; originX: number; originY: number; width: number; height: number };
+
+export type Adjustments = {
+  rotate: number;
+  flipHorizontal: boolean;
+  originX: number;
+  originY: number;
+  width: number;
+  height: number;
+};
 
 interface CropperProps {
   gridlines?: boolean;
@@ -24,6 +31,7 @@ interface CropperProps {
 
 interface CropperRefMethods {
   calculateAdjustments: () => Adjustments;
+  flip: () => void;
   reset: () => void;
   rotate: (degrees: RotationAngles) => void;
 }
@@ -35,6 +43,22 @@ interface GestureEventContext extends Record<string, unknown> {
   rightX: number;
   verticalMode: "top" | "bottom" | null;
   horizontalMode: "left" | "right" | null;
+}
+
+interface Bounds {
+  topY: number;
+  bottomY: number;
+  leftX: number;
+  rightX: number;
+}
+
+function createBoundsValues(initialBounds: Bounds) {
+  return {
+    topY: useSharedValue(initialBounds.topY),
+    bottomY: useSharedValue(initialBounds.bottomY),
+    leftX: useSharedValue(initialBounds.leftX),
+    rightX: useSharedValue(initialBounds.rightX),
+  };
 }
 
 function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
@@ -56,7 +80,8 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
   };
 
   const isActive = useSharedValue(false);
-  const rotation = useSharedValue(0);
+  const rotationZ = useSharedValue(0);
+  const rotationY = useSharedValue(0);
   const scale = useSharedValue(1);
 
   const currentBounds = createBoundsValues(initialBounds);
@@ -80,7 +105,7 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
     resetCurrentBounds();
     resetBoundingBox();
 
-    rotation.value = withTiming(0);
+    rotationZ.value = withTiming(0);
     scale.value = withTiming(1);
   };
 
@@ -93,7 +118,7 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
       nextScale = maxHeight / imageWidth;
     }
 
-    rotation.value = withTiming(degrees);
+    rotationZ.value = withTiming(degrees);
     scale.value = withTiming(nextScale);
 
     if (isOriginalOrientation) {
@@ -124,25 +149,37 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
 
   React.useImperativeHandle(ref, () => ({
     calculateAdjustments: () => {
-      // correct for indicator boxes and borders
+      const rotate = rotationZ.value;
+
       const indicatorSpace = BOX_INDICATOR_SIZE - 2 * BOX_INDICATOR_BORDER;
       const viewBoxWidth = boundingBoxRect.rightX.value - boundingBoxRect.leftX.value + indicatorSpace;
       const viewBoxHeight = boundingBoxRect.bottomY.value - boundingBoxRect.topY.value + indicatorSpace;
-      const actualBoxWidth = viewBoxWidth * (source.width / imageWidth);
-      const actualBoxHeight = viewBoxHeight * (source.height / imageHeight);
 
       const viewOriginX = boundingBoxRect.leftX.value - currentBounds.leftX.value;
       const viewOriginY = boundingBoxRect.topY.value - currentBounds.topY.value;
-      const actualOriginX = (viewOriginX / viewBoxWidth) * actualBoxWidth;
-      const actualOriginY = (viewOriginY / viewBoxHeight) * actualBoxHeight;
+
+      let actualBoxWidth = (viewBoxWidth / imageWidth) * source.width;
+      let actualBoxHeight = (viewBoxHeight / imageHeight) * source.height;
+
+      if (!(rotate % 180 === 0)) {
+        const scaledWidth = imageHeight * scale.value;
+        const scaledHeight = imageWidth * scale.value;
+
+        actualBoxHeight = (viewBoxHeight / scaledHeight) * source.width;
+        actualBoxWidth = (viewBoxWidth / scaledWidth) * source.height;
+      }
 
       return {
-        rotate: rotation.value,
-        originX: actualOriginX,
-        originY: actualOriginY,
+        rotate,
+        flipHorizontal: rotationY.value === 180,
+        originX: (viewOriginX / viewBoxWidth) * actualBoxWidth,
+        originY: (viewOriginY / viewBoxHeight) * actualBoxHeight,
         width: actualBoxWidth,
         height: actualBoxHeight,
       };
+    },
+    flip: () => {
+      rotationY.value = (rotationY.value + 180) % 360;
     },
     reset: handleOnReset,
     rotate: handleOnRotate,
@@ -194,13 +231,13 @@ function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps
   });
 
   const backgroundImageStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
+    transform: [{ scale: scale.value }, { rotateZ: `${rotationZ.value}deg` }, { rotateY: `${rotationY.value}deg` }],
   }));
 
   const foregroundImageStyle = useAnimatedStyle(() => ({
     top: -boundingBoxRect.topY.value + initialBounds.topY,
     left: -boundingBoxRect.leftX.value + initialBounds.leftX,
-    transform: [{ rotate: `${rotation.value}deg` }, { scale: scale.value }],
+    transform: [{ scale: scale.value }, { rotateZ: `${rotationZ.value}deg` }, { rotateY: `${rotationY.value}deg` }],
   }));
 
   const boundingBoxStyles = useAnimatedStyle(() => ({

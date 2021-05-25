@@ -1,11 +1,11 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as React from "react";
-import { Button, Dimensions, Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Button, Dimensions, Image, StyleSheet, Text, TextInput, View } from "react-native";
 import ImageCropper, { Adjustments } from "react-native-image-cropper";
 
 const { width, height } = Dimensions.get("screen");
 
-function PickImage({ onSelected }: { onSelected: (link: string) => void }) {
+function PickImage({ loading, onSelected }: { loading: boolean; onSelected: (link: string) => void }) {
   const [currentValue, setCurrentValue] = React.useState(
     "https://upload.wikimedia.org/wikipedia/commons/f/f9/Amsterdam_-_Rijksmuseum_-_panoramio_-_Nikolai_Karaneschev.jpg"
   );
@@ -18,7 +18,7 @@ function PickImage({ onSelected }: { onSelected: (link: string) => void }) {
     <View style={styles.container}>
       <Text style={styles.text}>Paste an image URL to crop</Text>
       <TextInput onChangeText={value => setCurrentValue(value)} value={currentValue} style={styles.input} />
-      <Button onPress={handleOnDone} title="Done" />
+      {loading ? <ActivityIndicator color="black" /> : <Button onPress={handleOnDone} title="Done" />}
     </View>
   );
 }
@@ -26,34 +26,39 @@ function PickImage({ onSelected }: { onSelected: (link: string) => void }) {
 export default function App() {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [croppedImage, setCroppedImage] = React.useState<ImageManipulator.ImageResult | null>(null);
-  const [originalImage, setOriginalImage] = React.useState<string | null>(null);
+  const [loadingSource, setLoadingSource] = React.useState(false);
+  const [sourceImage, setSourceImage] = React.useState<{ uri: string; height: number; width: number }>(null);
 
-  const handleOnSelectedImage = (link: string) => {
+  const handleOnSelectedImage = async (link: string) => {
+    setLoadingSource(true);
+    const imageForDimensions = await ImageManipulator.manipulateAsync(link, []);
+
+    setSourceImage({ uri: link, height: imageForDimensions.height, width: imageForDimensions.width });
     setCurrentStep(1);
-    setOriginalImage(link);
+    setLoadingSource(false);
   };
 
   const handleOnCancel = () => {
     setCurrentStep(0);
-    setOriginalImage(null);
+    setSourceImage(null);
   };
 
-  const handleOnDoneCropping = async ({ rotate, originX, originY, width, height }: Adjustments) => {
-    const manipulatedImage = await ImageManipulator.manipulateAsync(originalImage as string, [
-      { rotate },
-      { crop: { originX, originY, width, height } },
-    ]);
+  const handleOnDoneCropping = async ({ rotate, flipHorizontal, originX, originY, width, height }: Adjustments) => {
+    const manipulations: ImageManipulator.Action[] = [{ rotate }, { crop: { originX, originY, width, height } }];
+    if (flipHorizontal) manipulations.push({ flip: ImageManipulator.FlipType.Horizontal });
 
-    setCroppedImage(manipulatedImage);
+    const manipulatedImage = await ImageManipulator.manipulateAsync(sourceImage.uri, manipulations);
+
     setCurrentStep(2);
+    setCroppedImage(manipulatedImage);
   };
 
   if (currentStep === 0) {
-    return <PickImage onSelected={handleOnSelectedImage} />;
+    return <PickImage loading={loadingSource} onSelected={handleOnSelectedImage} />;
   }
 
   if (currentStep === 1) {
-    return <ImageCropper onCancel={handleOnCancel} onDone={handleOnDoneCropping} source={{ uri: originalImage }} />;
+    return <ImageCropper onCancel={handleOnCancel} onDone={handleOnDoneCropping} source={sourceImage} />;
   }
 
   return (
