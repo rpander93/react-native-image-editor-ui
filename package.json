@@ -1,5 +1,5 @@
 {
-  "name": "react-native-image-cropper",
+  "name": "react-native-image-editor-ui",
   "version": "0.1.0",
   "description": "User interface to crop and rotate images",
   "main": "lib/commonjs/index",
@@ -12,7 +12,7 @@
     "lib",
     "android",
     "ios",
-    "react-native-image-cropper.podspec",
+    "react-native-image-editor-ui.podspec",
     "!lib/typescript/example",
     "!android/build",
     "!ios/build",
@@ -31,16 +31,20 @@
   },
   "keywords": [
     "react-native",
-    "ios",
-    "android"
+    "image",
+    "editor",
+    "cropper",
+    "crop",
+    "rotate",
+    "reanimated"
   ],
-  "repository": "https://github.com/rpander93/react-native-image-cropper",
+  "repository": "https://github.com/rpander93/react-native-image-editor-ui",
   "author": "Remco Pander <rpander93@gmail.com> (https://github.com/rpander93)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rpander93/react-native-image-cropper/issues"
+    "url": "https://github.com/rpander93/react-native-image-editor-ui/issues"
   },
-  "homepage": "https://github.com/rpander93/react-native-image-cropper#readme",
+  "homepage": "https://github.com/rpander93/react-native-image-editor-ui#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

@@ -1,10 +1,10 @@
 {
-  "name": "react-native-image-cropper-example",
+  "name": "react-native-image-editor-ui-example",
   "displayName": "ImageCropper Example",
   "expo": {
-    "name": "react-native-image-cropper-example",
-    "slug": "react-native-image-cropper-example",
-    "description": "Example app for react-native-image-cropper",
+    "name": "react-native-image-editor-ui-example",
+    "slug": "react-native-image-editor-ui-example",
+    "description": "Example app for react-native-image-editor-ui",
     "privacy": "public",
     "version": "1.0.0",
     "platforms": [

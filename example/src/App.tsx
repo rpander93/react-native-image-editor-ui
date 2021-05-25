@@ -1,7 +1,7 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as React from "react";
 import { ActivityIndicator, Button, Dimensions, Image, StyleSheet, Text, TextInput, View } from "react-native";
-import ImageCropper, { Adjustments } from "react-native-image-cropper";
+import EditScreen, { Adjustments } from "react-native-image-editor-ui";
 
 const { width, height } = Dimensions.get("screen");
 
@@ -58,7 +58,7 @@ export default function App() {
   }
 
   if (currentStep === 1) {
-    return <ImageCropper onCancel={handleOnCancel} onDone={handleOnDoneCropping} source={sourceImage} />;
+    return <EditScreen onCancel={handleOnCancel} onDone={handleOnDoneCropping} source={sourceImage} />;
   }
 
   return (

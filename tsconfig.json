@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "react-native-image-cropper": ["./src/index"]
+      "react-native-image-editor-ui": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

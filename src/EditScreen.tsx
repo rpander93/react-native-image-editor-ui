@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   Image,
   ImageURISource,
@@ -12,9 +11,9 @@ import {
   View,
 } from "react-native";
 
-import Cropper, { Adjustments, RotationAngles } from "./Cropper";
+import EditBox, { Adjustments, RotationAngles } from "./EditBox";
 
-interface CropScreenProps {
+interface EditScreenProps {
   onCancel?: () => void;
   onDone: (adjustments: Adjustments) => void;
   source: ImageURISource & { height: number; width: number };
@@ -25,8 +24,8 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("screen");
 const PADDING_HORIZONTAL = 15;
 const BOX_WIDTH = SCREEN_WIDTH - PADDING_HORIZONTAL * 2;
 
-export default function CropScreen({ onCancel, onDone, source, useBackgroundCover = true }: CropScreenProps) {
-  const cropperRef = React.useRef<React.ElementRef<typeof Cropper>>(null);
+export default function EditScreen({ onCancel, onDone, source, useBackgroundCover = true }: EditScreenProps) {
+  const editBoxRef = React.useRef<React.ElementRef<typeof EditBox>>(null);
   const rotation = React.useRef<number>(0);
 
   const handleOnCancel = () => {
@@ -34,24 +33,24 @@ export default function CropScreen({ onCancel, onDone, source, useBackgroundCove
   };
 
   const handleOnDone = () => {
-    if (!cropperRef.current) return;
+    if (!editBoxRef.current) return;
 
-    onDone?.(cropperRef.current.calculateAdjustments());
+    onDone?.(editBoxRef.current.calculateAdjustments());
   };
 
   const handleOnFlip = () => {
-    cropperRef.current?.flip();
+    editBoxRef.current?.flip();
   };
 
   const handleOnReset = () => {
-    cropperRef.current?.reset();
+    editBoxRef.current?.reset();
     rotation.current = 0;
   };
 
   const handleOnRotate = () => {
     const newValue = (rotation.current + 90) % 360;
 
-    cropperRef.current?.rotate(newValue as RotationAngles);
+    editBoxRef.current?.rotate(newValue as RotationAngles);
     rotation.current = newValue;
   };
 
@@ -64,7 +63,7 @@ export default function CropScreen({ onCancel, onDone, source, useBackgroundCove
         <StatusBar barStyle="light-content" />
         <View style={styles.safeArea}>
           <View style={styles.content}>
-            <Cropper ref={cropperRef} maxHeight={SCREEN_HEIGHT * 0.7} maxWidth={BOX_WIDTH} source={{ ...source }} />
+            <EditBox ref={editBoxRef} maxHeight={SCREEN_HEIGHT * 0.7} maxWidth={BOX_WIDTH} source={{ ...source }} />
           </View>
           <View style={styles.primaryButtons}>
             <Pressable onPress={handleOnRotate}>

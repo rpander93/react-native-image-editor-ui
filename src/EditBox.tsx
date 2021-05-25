@@ -22,14 +22,14 @@ export type Adjustments = {
   height: number;
 };
 
-interface CropperProps {
+interface EditBoxProps {
   gridlines?: boolean;
   maxWidth?: number;
   maxHeight?: number;
   source: ImageURISource & { height: number; width: number };
 }
 
-interface CropperRefMethods {
+interface EditBoxRefMethods {
   calculateAdjustments: () => Adjustments;
   flip: () => void;
   reset: () => void;
@@ -61,7 +61,7 @@ function createBoundsValues(initialBounds: Bounds) {
   };
 }
 
-function Cropper({ gridlines = true, maxWidth, maxHeight, source }: CropperProps, ref: React.Ref<CropperRefMethods>) {
+function EditBox({ gridlines = true, maxWidth, maxHeight, source }: EditBoxProps, ref: React.Ref<EditBoxRefMethods>) {
   const aspectRatio = source.width / source.height;
 
   let imageWidth = (undefined !== maxWidth ? Math.min(maxWidth, source.width) : source.width) - 2 * BOX_BORDER;
@@ -345,4 +345,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default React.forwardRef(Cropper);
+export default React.forwardRef(EditBox);

@@ -1,4 +1,4 @@
-# 📐 react-native-image-cropper
+# 📐 react-native-image-editor-ui
 
 Provides an user interface to crop and rotate (local or remote) images a la iOS Photos or WhatsApp. This package does *not* contain code to perform the actual manipulations. This should be done using another library (e.g. `expo-image-manipulator`) or in the back-end.
 
@@ -9,7 +9,7 @@ This package renders at 60fps by leveraging `react-native-reanimated` and `react
 Before installing, make sure you have `react-native-reanimated@^2` and `react-native-gesture-handler` and configured. No other external dependencies are required.
 
 ```sh
-yarn add react-native-image-cropper
+yarn add react-native-image-editor-ui
 ```
 ## Usage
 
@@ -18,7 +18,7 @@ The default export is a full-screen component that shows a basic cropping UI. It
 [See an example screenshot here](assets/cropscreen_example.png).
 
 ```typescript
-import CropScreen, { Adustments } from "react-native-image-cropper";
+import EditScreen, { Adustments } from "react-native-image-editor-ui";
 
 const handleOnCancel = () => {
   // ..
@@ -28,14 +28,14 @@ const handleOnDone = ({ rotate, flipHorizontal, originX, originY, width, height 
   // ..
 };
 
-<CropScreen onCancel={handleOnCancel} onDone={handleOnDone} source={{ uri: "https://some.remote.example/image.png", width: 1200, height: 750,  }} useBackgroundCover={true} />
+<EditScreen onCancel={handleOnCancel} onDone={handleOnDone} source={{ uri: "https://some.remote.example/image.png", width: 1200, height: 750,  }} useBackgroundCover={true} />
 ```
 
-If you need more flexibility, you can also use the Cropper component directly which you can integrate in your own UI. Again, you *MUST* pass in the image dimensions (width, height). See also [src/CropScreen.tsx](src/CropScreen.tsx) for an example implementation.
+If you need more flexibility, you can also use the Cropper component directly which you can integrate in your own UI. Again, you *MUST* pass in the image dimensions (width, height). See also [src/EditScreen.tsx](src/EditScreen.tsx) for an example implementation.
 
 ```typescript
 import * as React from "react";
-import { Cropper, Adustments, RotationAngles } from "react-native-image-cropper";
+import { EditBox, Adustments, RotationAngles } from "react-native-image-editor-ui";
 
 const ref = React.useRef();
 
@@ -44,7 +44,7 @@ ref.current?.calculateAdjustments(); // --> returns object of shape `Adjustments
 ref.current?.reset();                // --> resets bounding box, rotation to original values
 ref.current?.rotate(90);             // --> rotates image. only values in 90 degrees interval are accepted
 
-<Cropper ref={ref} gridlines maxWidth={300} maxHeight={500} source={{ uri: "https://some.remote.example/image.png", width: 1200, height: 750 }} />
+<EditBox ref={ref} gridlines maxWidth={300} maxHeight={500} source={{ uri: "https://some.remote.example/image.png", width: 1200, height: 750 }} />
 ```
 
 ## Example
