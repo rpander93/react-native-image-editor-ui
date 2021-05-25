@@ -48,5 +48,12 @@
       "react": {
           "version": "detect"
       }
-  }
+  },
+  "ignorePatterns": [
+    "babel.config.js",
+    "example/",
+    "node_modules/",
+    "lib/",
+    "scripts/"
+  ]
 }

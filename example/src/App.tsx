@@ -27,7 +27,7 @@ export default function App() {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [croppedImage, setCroppedImage] = React.useState<ImageManipulator.ImageResult | null>(null);
   const [loadingSource, setLoadingSource] = React.useState(false);
-  const [sourceImage, setSourceImage] = React.useState<{ uri: string; height: number; width: number }>(null);
+  const [sourceImage, setSourceImage] = React.useState<{ uri: string; height: number; width: number } | null>();
 
   const handleOnSelectedImage = async (link: string) => {
     setLoadingSource(true);
