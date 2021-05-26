@@ -1,7 +1,7 @@
 import * as ImageManipulator from "expo-image-manipulator";
 import * as React from "react";
 import { ActivityIndicator, Button, Dimensions, Image, StyleSheet, Text, TextInput, View } from "react-native";
-import EditScreen, { Adjustments } from "react-native-image-editor-ui";
+import ImageEditorScreen, { Adjustments } from "react-native-image-editor-ui";
 
 const { width, height } = Dimensions.get("screen");
 
@@ -31,6 +31,10 @@ export default function App() {
 
   const handleOnSelectedImage = async (link: string) => {
     setLoadingSource(true);
+    /**
+     * Note: this is a "hack" to obtain the image dimensions.
+     * Image.getSize cannot be used as it returns wrong results on Android. See https://github.com/facebook/react-native/issues/22145)
+     */
     const imageForDimensions = await ImageManipulator.manipulateAsync(link, []);
 
     setSourceImage({ uri: link, height: imageForDimensions.height, width: imageForDimensions.width });
@@ -58,7 +62,7 @@ export default function App() {
   }
 
   if (currentStep === 1) {
-    return <EditScreen onCancel={handleOnCancel} onDone={handleOnDoneCropping} source={sourceImage} />;
+    return <ImageEditorScreen onCancel={handleOnCancel} onDone={handleOnDoneCropping} source={sourceImage} />;
   }
 
   return (

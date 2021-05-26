@@ -1,5 +1,5 @@
 import EditBox, { Adjustments, RotationAngles } from "./EditBox";
-import EditScreen from "./EditScreen";
+import EditorScreen from "./EditorScreen";
 
 export { Adjustments, EditBox as Cropper, RotationAngles };
-export default EditScreen;
+export default EditorScreen;

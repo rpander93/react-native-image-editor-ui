@@ -11,6 +11,7 @@ Before installing, make sure you have `react-native-reanimated@^2` and `react-na
 ```sh
 yarn add react-native-image-editor-ui
 ```
+
 ## Usage
 
 The default export is a full-screen component that shows a basic cropping UI. It contains a cancel, done, reset, flip & rotate button. Note that you *MUST* pass in the image dimensions (width, height). Unfortunately, the `Image.getSize` method cannot be used as it returns wrong results on Android. See [this issue](https://github.com/facebook/react-native/issues/22145).
@@ -18,7 +19,7 @@ The default export is a full-screen component that shows a basic cropping UI. It
 [See an example screenshot here](assets/cropscreen_example.png).
 
 ```typescript
-import EditScreen, { Adustments } from "react-native-image-editor-ui";
+import ImageEditorScreen, { Adustments } from "react-native-image-editor-ui";
 
 const handleOnCancel = () => {
   // ..
@@ -28,19 +29,20 @@ const handleOnDone = ({ rotate, flipHorizontal, originX, originY, width, height 
   // ..
 };
 
-<EditScreen onCancel={handleOnCancel} onDone={handleOnDone} source={{ uri: "https://some.remote.example/image.png", width: 1200, height: 750,  }} useBackgroundCover={true} />
+<ImageEditorScreen onCancel={handleOnCancel} onDone={handleOnDone} source={{ uri: "https://some.remote.example/image.png", width: 1200, height: 750,  }} useBackgroundCover={true} />
 ```
 
-If you need more flexibility, you can also use the Cropper component directly which you can integrate in your own UI. Again, you *MUST* pass in the image dimensions (width, height). See also [src/EditScreen.tsx](src/EditScreen.tsx) for an example implementation.
+If you need more flexibility, you can also use the Cropper component directly which you can integrate in your own UI. Again, you *MUST* pass in the image dimensions (width, height). See also [src/EditorScreen.tsx](src/EditorScreen.tsx) for an example implementation.
 
 ```typescript
 import * as React from "react";
 import { EditBox, Adustments, RotationAngles } from "react-native-image-editor-ui";
 
-const ref = React.useRef();
+const ref = React.useRef<React.ElementRef<typeof EditBox>>();
 
 /* Following methods are available */
 ref.current?.calculateAdjustments(); // --> returns object of shape `Adjustments`
+ref.current?.flip();                 // --> flips image horizontally
 ref.current?.reset();                // --> resets bounding box, rotation to original values
 ref.current?.rotate(90);             // --> rotates image. only values in 90 degrees interval are accepted
 
