@@ -48,6 +48,8 @@ export default function App() {
   };
 
   const handleOnDoneCropping = async ({ rotate, flipHorizontal, originX, originY, width, height }: Adjustments) => {
+    if (!sourceImage) return;
+
     const manipulations: ImageManipulator.Action[] = [{ rotate }, { crop: { originX, originY, width, height } }];
     if (flipHorizontal) manipulations.push({ flip: ImageManipulator.FlipType.Horizontal });
 

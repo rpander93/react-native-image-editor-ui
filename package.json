@@ -1,6 +1,6 @@
 {
   "name": "react-native-image-editor-ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "User interface to crop and rotate images",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
